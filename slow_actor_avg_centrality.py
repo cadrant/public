@@ -30,47 +30,41 @@ def make_link(G, node1, node2):
     (G[node2])[node1] = 1
     return G
 
-G = {} # our clique
-M = {} # Movies
-C = [] # Centrality
+actors = {}
 
 def test():
     # Open IMDB File and parse into a dictionray which would be a bipartite graph
     with open("imdb-1.tsv") as f:
-        movie_collection = f.read().splitlines()
-        #for entry in f.readlines():
-        for entry in movie_collection:
+        name_collection = f.readlines()
+        for entry in name_collection:
             entry.rstrip()
             fields = entry.split("\t");
-            actor = fields[0]
-            movie = fields[1] + " " + fields[2]
-            movie.rstrip("\n")
-            #print movie
-            # Have we seen this movie
-            if not M.has_key(movie):
-                #No? build a list of actors
-                A = []
-                A.insert(0,fields[0])
-                M[movie] = A
+            name = fields[0]
+            if not actors.has_key(name):
+                movies = []
+                movies.insert(0,fields[1] + " " + fields[2])
+                actors[name] = movies 
             else:
-                #Yes? make a link to all the other actors
-                for ca in M[movie]:
-                    make_link(G,actor,ca)
-                #and add it to the list
-                M[movie].insert(0,actor)
-    movie = "Elf 2003"
-    #print movie, "has", M[movie]
-    #print M
+                actors[name].insert(0,fields[1]+fields[2])
+
+    #Create clique style graph based on bipartite
+    G = {} #our clique
+    for actor in actors:
+        for other_actor in actors:
+            if actor != other_actor:
+                shared_movies = set(actors[actor]) & set(actors[other_actor])
+                if len(shared_movies) != 0:
+                    #print actor, "and", other_actor, "were in", shared_movies
+                    make_link(G,actor,other_actor)
 
     #Create a double list associating centrality and actor
-    # TODO: need a list of actors!
     C = []
-    for actor in A:
+    for actor in actors:
         t = [actor, 0]
         C.insert(0,t)
         C[0][1] = centrality(G,actor)
 
     C.sort(key=operator.itemgetter(1), reverse=False)
-    print C
+    print C[20]
 test()
 
